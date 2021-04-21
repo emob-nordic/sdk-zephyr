@@ -15,12 +15,17 @@
 #include <zephyr.h>
 
 #include <bluetooth/bluetooth.h>
+#include <bluetooth/conn.h>
+#include <bluetooth/hci_vs.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/bas.h>
 #include <bluetooth/services/hrs.h>
+
+#include <logging/log.h>
+LOG_MODULE_REGISTER(main, 4);
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -30,6 +35,51 @@ static const struct bt_data ad[] = {
 		      BT_UUID_16_ENCODE(BT_UUID_DIS_VAL))
 };
 
+static void set_tx_power(struct bt_conn *conn)
+{
+	uint16_t conn_handle;
+
+	int err = bt_hci_get_conn_handle(conn, &conn_handle);
+
+	if (err) {
+		LOG_ERR("No connection handle (err %d)", err);
+	} else {
+		struct bt_hci_cp_vs_write_tx_power_level *cp;
+		struct bt_hci_rp_vs_write_tx_power_level *rp;
+		struct net_buf *buf;
+		struct net_buf *rsp = NULL;
+
+		buf = bt_hci_cmd_create(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL, sizeof(*cp));
+		if (!buf) {
+			LOG_ERR("Cannot allocate buffer to set TX power");
+			return;
+		}
+
+		cp = net_buf_add(buf, sizeof(*cp));
+		cp->handle = sys_cpu_to_le16(conn_handle);
+		cp->handle_type = BT_HCI_VS_LL_HANDLE_TYPE_CONN;
+		cp->tx_power_level = 0;
+
+		LOG_INF("Setting TX power to: %" PRId8, cp->tx_power_level);
+
+		err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL, buf, &rsp);
+		if (err) {
+			uint8_t reason = rsp ?
+			  ((struct bt_hci_rp_vs_write_tx_power_level *)rsp->data)->status : 0;
+
+			LOG_ERR("Cannot set TX power (err: %d reason 0x%02x)",
+				err, reason);
+		} else {
+			rp = (struct bt_hci_rp_vs_write_tx_power_level *)rsp->data;
+			LOG_INF("TX power returned by command: %" PRId8, rp->selected_tx_power);
+		}
+
+		if (rsp) {
+			net_buf_unref(rsp);
+		}
+	}
+}
+
 static void connected(struct bt_conn *conn, uint8_t err)
 {
 	if (err) {
@@ -37,6 +87,8 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	} else {
 		printk("Connected\n");
 	}
+
+	set_tx_power(conn);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)

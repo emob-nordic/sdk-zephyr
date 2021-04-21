@@ -9,6 +9,9 @@
 #include <devicetree.h>
 #include <drivers/gpio.h>
 
+#include <logging/log.h>
+LOG_MODULE_REGISTER(main, 4);
+
 /* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS   1000
 
