@@ -23,17 +23,17 @@ LOG_MODULE_REGISTER(thingy53_board_init, LOG_LEVEL);
 #define NRF21540FEM_CTRL_PDN_FLAGS	 DT_GPIO_FLAGS(NRF21540FEM_CTRL_LABEL, pdn_gpios)
 
 #define ADXL362_LABEL			 DT_NODELABEL(adxl362)
-#define ADXL362_GPIO_NODE		 DT_SPI_DEV_CS_GPIOS_CTLR(ADXL362_LABEL)
+#define ADXL362_GPIO_NODE		 DT_SPI_DEV_CS_GPIOS_LABEL(ADXL362_LABEL)
 #define ADXL362_CS			 DT_SPI_DEV_CS_GPIOS_PIN(ADXL362_LABEL)
 #define ADXL362_FLAGS			 DT_SPI_DEV_CS_GPIOS_FLAGS(ADXL362_LABEL)
 
 #define BMI270_LABEL			 DT_NODELABEL(bmi270)
-#define BMI270_GPIO_NODE		 DT_SPI_DEV_CS_GPIOS_CTLR(BMI270_LABEL)
+#define BMI270_GPIO_NODE		 DT_SPI_DEV_CS_GPIOS_LABEL(BMI270_LABEL)
 #define BMI270_CS			 DT_SPI_DEV_CS_GPIOS_PIN(BMI270_LABEL)
 #define BMI270_FLAGS			 DT_SPI_DEV_CS_GPIOS_FLAGS(BMI270_LABEL)
 
 #define NRF21540FEM_LABEL		 DT_NODELABEL(nrf21540fem)
-#define NRF21540FEM_GPIO_NODE		 DT_SPI_DEV_CS_GPIOS_CTLR(NRF21540FEM_LABEL)
+#define NRF21540FEM_GPIO_NODE		 DT_SPI_DEV_CS_GPIOS_LABEL(NRF21540FEM_LABEL)
 #define NRF21540FEM_CS			 DT_SPI_DEV_CS_GPIOS_PIN(NRF21540FEM_LABEL)
 #define NRF21540FEM_FLAGS		 DT_SPI_DEV_CS_GPIOS_FLAGS(NRF21540FEM_LABEL)
 
@@ -58,7 +58,7 @@ static int setup(const struct device *dev)
 		return err;
 	}
 
-	gpio = DEVICE_DT_GET(ADXL362_GPIO_NODE);
+	gpio = device_get_binding(ADXL362_GPIO_NODE);
 	if (!device_is_ready(gpio)) {
 		LOG_ERR("Gpio device not ready");
 		return -ENODEV;
@@ -69,7 +69,7 @@ static int setup(const struct device *dev)
 		return err;
 	}
 
-	gpio = DEVICE_DT_GET(BMI270_GPIO_NODE);
+	gpio = device_get_binding(BMI270_GPIO_NODE);
 	if (!device_is_ready(gpio)) {
 		LOG_ERR("Gpio device not ready");
 		return -ENODEV;
@@ -80,7 +80,7 @@ static int setup(const struct device *dev)
 		return err;
 	}
 
-	gpio = DEVICE_DT_GET(NRF21540FEM_GPIO_NODE);
+	gpio = device_get_binding(NRF21540FEM_GPIO_NODE);
 	if (!device_is_ready(gpio)) {
 		LOG_ERR("Gpio device not ready");
 		return -ENODEV;
